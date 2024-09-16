@@ -27,7 +27,14 @@ enum Commnads {
         #[arg()]
         id: u32,
     },
-    GetAll,
+    MarkInProgress{
+        #[arg()]
+        id: u32,
+    },
+    ShowAll,
+    ShowDone,
+    ShowInProgress,
+    ShowTodo,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -37,6 +44,7 @@ struct Quest {
     description: String,
     prize: String,
     completed: bool,
+    progress: bool,
 }
 
 fn load_task() -> HashMap<u32, Quest> {
@@ -67,6 +75,7 @@ fn main() {
                 description: "".to_string(),
                 prize: "".to_string(),
                 completed: false,
+                progress: false,
             };
             tasks.insert(new_id, new_task);
             save_task(&tasks);
@@ -74,6 +83,9 @@ fn main() {
         Commnads::Complete { id } => {
             if let Some(task) = tasks.get_mut(id) {
                 task.completed = true;
+                if task.progress {
+                    task.progress = false;
+                }
                 save_task(&tasks);
                 println!("Задача с id {} успешно выполнена", id);
             } else {
@@ -88,7 +100,7 @@ fn main() {
                 println!("Задача с id {} не найдена", id);
             }
         }
-        Commnads::GetAll => {
+        Commnads::ShowAll => {
             if tasks.is_empty() {
                 println!("Список задач пуст.");
             } else {
@@ -98,5 +110,60 @@ fn main() {
                 }
             }
         }
+        Commnads::ShowDone => {
+            if tasks.is_empty() {
+                println!("Список задач пуст.")
+            } else {
+                for task in tasks.values() {
+                    if task.completed{
+                        println!("[✔] {}: {}",  task.task, task.prize);
+                    }
+                }
+            }
+        }
+        Commnads::MarkInProgress { id } =>{
+            if let Some(task) = tasks.get_mut(id){
+                if task.completed {
+                    println!("[{}], Задача {} выполнена и не может быть взята в работу.", id, task.task);
+                }else{
+                    task.progress = true;
+                    save_task(&tasks);
+                    println!("Задача с id {} взята в работу", id);
+                }
+            } else {
+                println!("Задача с id {} не найдена", id);
+            }
+        }
+        Commnads::ShowInProgress => {
+            if tasks.is_empty(){
+                println!("Список задач пуст.")
+            } else {
+                for task in tasks.values() {
+                    if task.progress {
+                        println!("[?] {}: {}", task.task, task.prize);
+                    } 
+                    else {
+                        println!("Нет задачь в работе.")
+                    }
+            }
+        }
     }
+
+        Commnads::ShowTodo => {
+            if tasks.is_empty() {
+                println!("Список задач пуст.");
+            }
+            else {
+                for task in tasks.values() {
+                    if !task.completed && !task.progress {
+                        println!("[ ] {}: {}", task.task, task.prize);
+                    } else {
+                        println!("К сожалению заметок нет!");
+                    }
+                }
+            }
+        }
+    }
+
 }
+
