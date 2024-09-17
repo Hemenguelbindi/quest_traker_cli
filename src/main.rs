@@ -68,6 +68,17 @@ fn save_task(tasks: &HashMap<u32, Quest>) {
     fs::write(FILE_PATH, data).expect("Ну удалось записать задачи в файл.")
 }
 
+
+fn print_hader_table(type_table: &str) {
+    println!("+-----------------------------+");
+    println!("|       ДОСКА {}         |", type_table);
+    println!("+-----------------------------+");
+}
+
+
+
+
+
 fn main() {
     let args = TaskTracker::parse();
     let mut tasks = load_task();
@@ -123,8 +134,10 @@ fn main() {
         }
         Commnads::ShowAll => {
             if tasks.is_empty() {
+                print_hader_table("КВЕСТОВ");
                 println!("Список задач пуст.");
             } else {
+                print_hader_table("ВЫПОЛНЕНЫЕ");
                 for task in tasks.values() {
                     let status = if task.status == "done" { "✔" } else { "❌" };
                     println!("[{}] {}: {}", status, task.id, task.task);
