@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::fs;
+
 use std::path::Path;
 use chrono::Utc;
 
 use crate::quest::Quest;
 use crate::comands::Commands;
-use crate::utils::print_header_table;
+use crate::utils::{print_header_table, print_table, input, ask_user};
 
 const FILE_PATH: &str = "tasks.json";
 
@@ -52,6 +53,14 @@ impl TaskManager {
         let new_id = self.tasks.len() as u32 + 1;
         let mut new_task = Quest::new(new_id, task);
         new_task.created_at = Utc::now().format("%H:%M:%S %d-%m-%Y").to_string();
+        new_task.status = "not defined".to_string();
+        println!();
+        if ask_user("Хотите добавить описание квеста: Y/N> ") {
+            new_task.description = input("Введите описание квеста >>> ");
+        }
+        if ask_user("Хотите установить награду за вполнение? Y/N>") {
+            new_task.prize = input("Введите награду за вполнение >>> ");
+        }
         self.tasks.insert(new_id, new_task);
         self.save_tasks();
     }
@@ -59,13 +68,13 @@ impl TaskManager {
     fn update_task(&mut self, id: u32) {
         let task = self.tasks.get_mut(&id).unwrap();
         task.update_at = Utc::now().format("%H:%M:%S %d-%m-%Y").to_string();
-        task.status = "Done".to_string();
         self.save_tasks();
     }
 
     fn complete_task(&mut self, id: u32) {
         let task = self.tasks.get_mut(&id).unwrap();
         task.created_at = Utc::now().format("%H:%M:%S %d-%m-%Y").to_string();
+        task.status = "Done".to_string();
         self.save_tasks();
     }
     fn remove_task(&mut self, id: u32) {
@@ -85,21 +94,23 @@ impl TaskManager {
         if self.tasks.is_empty() {
             println!("Нет квестов");
         } else {
+            print_table();
             for task in self.tasks.values() {
                 let status = if task.status == "Done" { "✔"} else {"❌"};
-                println!("[{}] {}", status, task.task);
+                println!("[{}] {}, {}, {}", status, task.id, task.task, task.status);
             }
         }
     }
 
     fn show_done_tasks(&self) {
-        print_header_table("ЗАВЕРШЕННЫЕ ЗАДАЧИ");
+        print_header_table("ЗАВЕРШЕННЫЕ КВЕСТЫ");
         if self.tasks.is_empty() {
             println!("Нет квестов");
         } else {
+            print_table();
             for task in self.tasks.values() {
                 if task.status == "Done" {
-                    println!("[✔] {}",  task.task);
+                    println!("[✔] {}, {}, {}", task.id, task.task, task.status);
                 }
             }
         }
@@ -111,10 +122,10 @@ impl TaskManager {
             println!("Нет квестов")
         }
         else {
-
+            print_table();
             for task in self.tasks.values() {
                 if task.status == "InPrigress".to_string() {
-                    println!("[] {}", task.task);
+                    println!("[ ] {} {} {}", task.id, task.task, task.status);
                 }    
             }
         }
@@ -122,9 +133,10 @@ impl TaskManager {
 
     fn show_todo_tasks(&self) {
         print_header_table("СВОБОДНЫЕ КВЕТЫ");
+        print_table();
         for task in self.tasks.values() {
-            if task.status == "".to_string() {
-                println!("[ ] {}", task.task);
+            if task.status == "not defined".to_string() {
+                println!("[ ] {}, {}, {}", task.id, task.task, task.status);
             }
         }
     }
